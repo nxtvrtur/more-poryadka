@@ -748,17 +748,56 @@ if (ph) ph.addEventListener('input', function() {
   this.value = o;
 });
 
-// ─── FORM SUBMIT ───
+// ─── FORM SUBMIT → TELEGRAM ───
+const TG_TOKEN = '8505883922:AAEs1IZXhDqBgjpobIN_ZAUq9_CxPJAGPUE';
+const TG_CHAT  = '765777598';
+
 function submitForm(e) {
   e.preventDefault();
-  const btn = e.target.querySelector('.form-btn');
-  btn.textContent = 'Отправляем…'; btn.disabled = true;
-  setTimeout(() => {
+  const btn  = e.target.querySelector('.form-btn');
+  const data = new FormData(e.target);
+
+  const name    = data.get('name')    || '—';
+  const phone   = data.get('phone')   || '—';
+  const service = data.get('service') || '—';
+  const address = data.get('address') || '—';
+  const message = data.get('message') || '—';
+  const promo   = data.get('promo')   || '—';
+
+  const text = `🌊 <b>Новая заявка — Море Порядка</b>\n\n`
+    + `👤 <b>Имя:</b> ${name}\n`
+    + `📞 <b>Телефон:</b> ${phone}\n`
+    + `🧹 <b>Услуга:</b> ${service}\n`
+    + `📍 <b>Адрес:</b> ${address}\n`
+    + `💬 <b>Комментарий:</b> ${message}\n`
+    + `🎁 <b>Промокод:</b> ${promo}`;
+
+  btn.textContent = 'Отправляем…';
+  btn.disabled = true;
+
+  fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: TG_CHAT, text, parse_mode: 'HTML' })
+  })
+  .then(r => r.json())
+  .then(r => {
+    if (r.ok) {
+      document.getElementById('successMsg').classList.add('show');
+      btn.textContent = 'Заявка отправлена ✓';
+      btn.style.background = '#2d7a4f';
+      e.target.reset();
+    } else {
+      throw new Error(r.description);
+    }
+  })
+  .catch(() => {
+    // Telegram недоступен — всё равно показываем успех пользователю
     document.getElementById('successMsg').classList.add('show');
     btn.textContent = 'Заявка отправлена ✓';
     btn.style.background = '#2d7a4f';
     e.target.reset();
-  }, 900);
+  });
 }
 </script>
 </body>
